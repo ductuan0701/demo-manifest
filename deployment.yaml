@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: gitops-demo
-        image: boychungtinh/gitops-demo:v1
+        image: boychungtinh/gitops-demo:v1.1
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
