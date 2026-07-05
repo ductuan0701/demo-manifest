@@ -1,0 +1,39 @@
+1. Mô tả app/image
+
+App: Ứng dụng Node.js gồm 3 endpoint: / (Home), /health (Status), và /api/info (Version).
+
+Image: Build qua Dockerfile ép kiến trúc linux/amd64 (để tương thích giữa Mac ARM và Server x86), sau đó push lên Docker Hub.
+
+2. Giải thích file manifest
+
+deployment.yaml: Quản lý vòng đời ứng dụng, khai báo Docker Image, phiên bản (Tag) và số lượng bản sao (Replicas).
+
+service.yaml: Cân bằng tải nội bộ (ClusterIP), gom nhóm và phân phối mạng đến các Pod thông qua nhãn (Selector).
+
+ingress.yaml: Bộ định tuyến nhận luồng truy cập từ Internet (dựa vào Domain/Path) và đẩy vào Service.
+
+3. Luồng truy cập của người dùng
+Người dùng (Browser/Curl) ➔ Ingress Controller (Traefik) ➔ Service ➔ Pod (Ứng dụng Node.js).
+
+4. Luồng triển khai GitOps
+Dev cập nhật Code ➔ Build & Push Image mới lên Registry ➔ Sửa Tag Image trong deployment.yaml ở repo Manifest ➔ ArgoCD phát hiện thay đổi trên Git ➔ Tự động Sync và Apply cấu hình mới vào Kubernetes.
+
+5. 5 lỗi thường gặp & Cách kiểm tra
+
+CrashLoopBackOff (Lệch kiến trúc chip): Dùng kubectl logs <pod>. Bắt lỗi exec format error.
+
+Pod Pending (Đầy dung lượng): Dùng kubectl describe node. Bắt cảnh báo disk-pressure.
+
+Sync Error (Thiếu Namespace): Kiểm tra chi tiết log lỗi trực tiếp trên giao diện ArgoCD.
+
+Lỗi 404 Not Found (Sai Host/Path Ingress): Khắc phục bằng cách test thẳng IP kèm Header: curl -H "Host: <domain>" http://<IP>.
+
+ImagePullBackOff (Sai Tag/Tên Image): Dùng kubectl describe pod <pod>. Xem phần Events báo lỗi Failed to pull image.
+
+6. Ý nghĩa trạng thái ArgoCD
+
+Synced: Cấu hình đang chạy trên Kubernetes khớp 100% với mã nguồn trên Git.
+
+OutOfSync: Môi trường Kubernetes và Git đang bị lệch nhau (phát sinh Drift).
+
+Healthy: Tài nguyên đã khởi tạo thành công, Pod đang chạy ổn định (Running).
